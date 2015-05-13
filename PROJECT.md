@@ -83,17 +83,25 @@ Interface repos should be kept in repositories with the following format
      /peer/...
 ```
 
-MileStones
+interface.yaml will contain metdata about the interface. name, maintainer, category.
+
+An interface must then provide implementations for both requires and provides
+in those directories or a single implementation for peer. The format of this is
+TBD but will have to define handlers for normal relation events (oined,
+changed, etc) and some indication of how to packages deps used in the impl of
+the interface such that it can be consumed by the charm.
+
+Milestones
 ===========
-List milestones/checkpoints that are achievable in 2 week iterations.
-Describe implementation plan for each milestone
-Size/estimate number of people needed to achieve a milestone in a given sprint.
-A milestone  ideally
-Delivers a user story, or helps make progress towards one
-A tangible deliverable in a form that feedback can be given.
-Describe what success looks like for each milestone
-How will we know we are done 
-How will we quantify and measure success
+1st pass over on disk format
+1st pass over REST API with basic service
+Working basic webservice (read-only public api, admin only publish)
+1st pass over public HTML interface
+charm tools interface to API for list, publish, search
+
+Access control for individual interaces.
+
+Move code into charmstore
 
 Test Plan
 ==========
