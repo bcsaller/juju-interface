@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "repo": {
+      "type": "string"
+    },
+    "lastModified": {
+      "type": "string"
+    },
+    "version": {
+      "type": "number"
+    },
+    "description": {
+      "type": "string"
+    }
+  }
+}
