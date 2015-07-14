@@ -1,3 +1,4 @@
+import argparse
 from bson.json_util import dumps, loads
 from document import Layer, Interface
 from tornado import gen
@@ -10,6 +11,7 @@ import tornado.ioloop
 import tornado.template
 import tornado.web
 from json import load
+from config import Config
 
 
 def dump(s):
@@ -37,16 +39,26 @@ class RestBase(tornado.web.RequestHandler):
     def db(self):
         return getattr(self.settings['db'], self.collection)
 
+    def parse_search_query(self):
+        result = {}
+        q = self.get_query_arguments("q")
+        for query in q:
+            if ":" in query:
+                k, v = query.split(":", 1)
+                result[k] = v
+            else:
+                result[self.factory.pk] = query
+        return result
+
 
 class RestCollection(RestBase):
     @tornado.web.asynchronous
     @gen.coroutine
     def get(self):
-        cursor = self.db.find({"id": {"$exists": True}})
+        q = self.parse_search_query()
         response = []
-        while (yield cursor.fetch_next):
-            document = cursor.next_object()
-            response.append(Interface(document))
+        for iface in (yield Interface.find(self.db, **q)):
+            response.append(iface)
         # Iteration complete
         self.write(dump(response))
         self.finish()
@@ -133,19 +145,28 @@ class GoogleOAuth2LoginHandler(tornado.web.RequestHandler,
                 response_type='code',
                 extra_params={'approval_prompt': 'auto'})
 
+def setup():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-p', '--port', type=int, default=8888)
+    parser.add_argument('-d', '--database', type=str, default="test")
+    parser.add_argument('-c', '--config', type=Config.load,
+                        default=pkg_resources.resource_filename(__name__, "config.json"))
+
+    options = parser.parse_args()
+    return options
 
 def main():
-    db = motor.MotorClient().test
-    settings = dict(
-        site="http://bcsaller.dyndns.org:8888",
+    options = setup()
+    db = getattr(motor.MotorClient(), options.database)
+    settings = options.config
+    settings.update(dict(
         autoreload=True,
         debug=True,
         login_url="/login",
         template_path=pkg_resources.resource_filename(__name__, "."),
         static_path=pkg_resources.resource_filename(__name__, "static"),
-        cookie_secret="52e714bd-d35f-4c22-8815-f19aaf9b11d9",
         google_oauth=load_oauth(os.path.expanduser("~/.juju-interfaces.key")),
-        db=db)
+        db=db))
 
     application = tornado.web.Application([
         (r"/api/v1/interfaces/?", InterfacesHandler),

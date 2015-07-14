@@ -1,0 +1,11 @@
+{
+  "type": "object",
+  "properties": {
+    "site_url": {
+      "type": "string"
+    },
+    "cookie_secret": {
+      "type": "string"
+    }
+  }
+}

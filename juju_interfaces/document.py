@@ -42,6 +42,32 @@ class Document(dict):
             raise gen.Return(cls(document))
         raise gen.Return(cls({cls.pk: key}))
 
+    @classmethod
+    def query_from_schema(cls, key, value):
+        spec = cls.schema['properties'].get(key)
+        if not spec:
+            return {"$eq": value}
+        stype = spec.get("type", "string")
+        if stype == "number":
+            return {"$eq": int(value)}
+        return {"$regex": value}
+
+    @classmethod
+    @gen.coroutine
+    def find(cls, db, **kwargs):
+        query = {}
+        for k, v in kwargs.items():
+            query[k] = cls.query_from_schema(k, v)
+        if not query:
+            query = {cls.pk: {"$exists": True}}
+        cursor = db.find(query)
+        # XXX: how to only yield cls instances?
+        result = []
+        while (yield cursor.fetch_next):
+            doc = cursor.next_object()
+            result.append(cls(doc))
+        raise gen.Return(result)
+
     @gen.coroutine
     def save(self, db, upsert=True):
         pk = self[self.pk]
