@@ -10,11 +10,11 @@
     "repo": {
       "type": "string"
     },
-    "lastModified": {
-      "type": "string"
-    },
     "version": {
       "type": "number"
+    },
+    "summary": {
+      "type": "string"
     }
   }
 }

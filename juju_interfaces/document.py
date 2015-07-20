@@ -1,4 +1,5 @@
 from bson.json_util import loads, dumps
+import datetime
 import jsonschema
 import pkg_resources
 from tornado import gen
@@ -72,6 +73,8 @@ class Document(dict):
     def save(self, db, upsert=True):
         pk = self[self.pk]
         self.validate()
+        dict.__setitem__(self, 'lastModified',
+                         datetime.datetime.utcnow())
         yield db.update({self.pk: pk},
                         {'$set': self},
                         upsert=upsert)

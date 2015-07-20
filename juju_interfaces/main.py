@@ -63,6 +63,22 @@ class RestCollection(RestBase):
         self.write(dump(response))
         self.finish()
 
+    #@tornado.web.authenticated
+    @tornado.web.addslash
+    @tornado.web.asynchronous
+    @gen.coroutine
+    def post(self):
+        # XXX: assumes encoding :-/
+        body = loads(self.request.body.decode("utf-8"))
+        if not isinstance(body, list):
+            body = [body]
+        for item in body:
+            id = item['id']
+            document = yield self.factory.load(self.db, id)
+            document.update(item)
+            yield document.save(self.db)
+        self.finish()
+
 
 class InterfacesHandler(RestCollection):
     factory = Interface
@@ -145,15 +161,18 @@ class GoogleOAuth2LoginHandler(tornado.web.RequestHandler,
                 response_type='code',
                 extra_params={'approval_prompt': 'auto'})
 
+
 def setup():
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--port', type=int, default=8888)
     parser.add_argument('-d', '--database', type=str, default="test")
     parser.add_argument('-c', '--config', type=Config.load,
-                        default=pkg_resources.resource_filename(__name__, "config.json"))
+                        default=pkg_resources.resource_filename(
+                            __name__, "config.json"))
 
     options = parser.parse_args()
     return options
+
 
 def main():
     options = setup()
@@ -170,7 +189,7 @@ def main():
 
     application = tornado.web.Application([
         (r"/api/v1/interfaces/?", InterfacesHandler),
-        (r"/api/v1/interface/([\w\d_]+)/?", InterfaceHandler),
+        (r"/api/v1/interface/([\-\w\d_]+)/?", InterfaceHandler),
         (r"/api/v1/layers/?", LayersHandler),
         (r"/api/v1/layer/([\w\d_]+)/?", LayerHandler),
         (r"/login/", GoogleOAuth2LoginHandler),
