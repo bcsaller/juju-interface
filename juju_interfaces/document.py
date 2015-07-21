@@ -1,12 +1,23 @@
 from bson.json_util import loads, dumps
 import datetime
 import jsonschema
+import logging
 import pkg_resources
+from tornado import autoreload
 from tornado import gen
 
 
-def loader(filename):
+def watcher(fn, watchset=set()):
+    if fn not in watchset:
+        autoreload.watch(fn)
+        logging.debug("Autoreload: {}".format(fn))
+        watchset.add(fn)
+
+
+def loader(filename, watch=True):
     fn = pkg_resources.resource_filename(__name__, filename)
+    if watch:
+        watcher(fn)
     return loads(open(fn).read())
 
 

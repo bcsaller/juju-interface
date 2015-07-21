@@ -12,6 +12,7 @@ import tornado.template
 import tornado.web
 from json import load
 from config import Config
+import logging
 
 
 def dump(s):
@@ -22,7 +23,7 @@ class MainHandler(tornado.web.RequestHandler):
     def get(self):
         self.render("index.html",
                     links=['/api/v1/interfaces/',
-                           '/api/v1/interface/mysql/',
+                           '/api/v1/interface/pgsql/',
                            '/api/v1/layers/',
                            '/api/v1/layer/charmhelpers/'],
                     site=self.settings['site'])
@@ -165,12 +166,14 @@ class GoogleOAuth2LoginHandler(tornado.web.RequestHandler,
 def setup():
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--port', type=int, default=8888)
+    parser.add_argument('-l', '--log-level', default=logging.INFO)
     parser.add_argument('-d', '--database', type=str, default="test")
     parser.add_argument('-c', '--config', type=Config.load,
                         default=pkg_resources.resource_filename(
                             __name__, "config.json"))
 
     options = parser.parse_args()
+    logging.basicConfig(level=options.log_level)
     return options
 
 

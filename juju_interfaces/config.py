@@ -1,4 +1,4 @@
-from document import Document, loader
+from document import Document, loader, watcher
 import json
 
 
@@ -8,5 +8,6 @@ class Config(Document):
 
     @classmethod
     def load(cls, fn):
+        watcher(fn)
         data = json.load(open(fn))
         return cls(data)
