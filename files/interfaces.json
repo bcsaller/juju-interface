@@ -1,0 +1,52 @@
+[
+  {
+    "_id": {
+      "$oid": "55a471959c1d246feae487e5"
+    },
+    "repo": "https://github.com/bcsaller/juju-relation-pgsql.git",
+    "id": "pgsql",
+    "version": 1,
+    "lastModified": {
+      "$date": 1437423201973
+    },
+    "name": "pgsql5"
+  },
+  {
+    "_id": {
+      "$oid": "55a702cb9c1d246feae487e8"
+    },
+    "lastModified": {
+      "$date": 1437423201980
+    },
+    "repo": "https://git.launchpad.net/~james-page/charms/+source/juju-relation-ovsdb-manager",
+    "id": "ovsdb-manager",
+    "version": 1,
+    "summary": "Interface for relating to the OVSDB manager aspect of OpenDayLight SDN",
+    "name": "ovsdb-manager"
+  },
+  {
+    "_id": {
+      "$oid": "55a704799c1d246feae487e9"
+    },
+    "lastModified": {
+      "$date": 1437423201982
+    },
+    "repo": "https://git.launchpad.net/~james-page/charms/+source/juju-relation-neutron-plugin",
+    "id": "neutron-plugin",
+    "version": 1,
+    "summary": "Interface for intergrating Neutron SDN with the nova-compute charm",
+    "name": "neutron-plugin"
+  },
+  {
+    "_id": {
+      "$oid": "55aed5139c1d246feae487ec"
+    },
+    "repo": "https://git.launchpad.net/~bcsaller/charms/+source/http",
+    "id": "http",
+    "version": 1,
+    "lastModified": {
+      "$date": 1437521171091
+    },
+    "name": "http"
+  }
+]

@@ -1,0 +1,13 @@
+web:
+  build: .
+  ports:
+   - "9999:8888"
+  volumes:
+   - .:/usr/src/app
+   - ~/.juju-interfaces.key:/root/.juju-interfaces.key
+  links:
+   - mongo
+mongo:
+  image: mongo
+  ports:
+   - "27017"

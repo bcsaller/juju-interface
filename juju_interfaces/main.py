@@ -25,7 +25,7 @@ class MainHandler(tornado.web.RequestHandler):
                     links=['/api/v1/interfaces/',
                            '/api/v1/interface/pgsql/',
                            '/api/v1/layers/',
-                           '/api/v1/layer/charmhelpers/'],
+                           '/api/v1/layer/basic/'],
                     site=self.settings['site'])
 
 
@@ -167,7 +167,8 @@ def setup():
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--port', type=int, default=8888)
     parser.add_argument('-l', '--log-level', default=logging.INFO)
-    parser.add_argument('-d', '--database', type=str, default="test")
+    parser.add_argument('-d', '--database-name', type=str, default="test")
+    parser.add_argument('--database', type=str, default="mongo")
     parser.add_argument('-c', '--config', type=Config.load,
                         default=pkg_resources.resource_filename(
                             __name__, "config.json"))
@@ -179,7 +180,8 @@ def setup():
 
 def main():
     options = setup()
-    db = getattr(motor.MotorClient(), options.database)
+    db = getattr(motor.MotorClient(host=options.database),
+                 options.database_name)
     settings = options.config
     settings.update(dict(
         autoreload=True,
