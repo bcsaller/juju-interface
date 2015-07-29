@@ -4,4 +4,4 @@ launch:
 populate:
 	@echo installing sample data
 	curl -d @files/interfaces.json http://localhost:9999/api/v1/interfaces/
-	curl -d @files/layers http://localhost:9999/api/v1/layers/
+	curl -d @files/layers.json http://localhost:9999/api/v1/layers/

@@ -5,6 +5,7 @@ from tornado import gen
 import pkg_resources
 import motor
 import os
+import sys
 import tornado.auth
 import tornado.escape
 import tornado.ioloop
@@ -132,11 +133,24 @@ class LayerHandler(RestResource):
 
 
 def load_oauth(key_fn):
-    if not os.path.exists(key_fn):
-        print("You need to set up a valid key file for auth.\n"
-              "See http://www.tornadoweb.org/en/stable/auth.html#google"
-              "for the default. By default this should live in"
-              " ~/.juju-interfaces.key.")
+    if not os.path.isfile(key_fn):
+        print("""
+You need to set up a valid key file for auth.
+Follow the instructions at http://www.tornadoweb.org/en/stable/auth.html#google
+to create a set of OAuth2 web application credentials.
+
+Then place these credentials under ~/ (or under ~root/ if you run docker with
+sudo), in a JSON file called .juju-interfaces.key containing your credentials
+in the form:
+
+    {
+        "google_oauth": {
+            "key": CLIENT_ID,
+            "secret": CLIENT_SECRET
+        }
+    }
+""")
+        sys.exit(1)
     return load(open(key_fn))
 
 
