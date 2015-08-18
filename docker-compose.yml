@@ -1,12 +1,13 @@
 web:
   build: .
   ports:
-   - "9999:8888"
+      - "9999:9999"
   volumes:
    - .:/usr/src/app
    - ~/.juju-interfaces.key:/root/.juju-interfaces.key
   links:
    - mongo
+  command: [ "python", "./juju_interfaces/main.py", "--database", "mongo"]
 mongo:
   image: mongo
   ports:

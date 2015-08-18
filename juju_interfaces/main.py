@@ -4,13 +4,11 @@ from document import Layer, Interface
 from tornado import gen
 import pkg_resources
 import motor
-import os
 import tornado.auth
 import tornado.escape
 import tornado.ioloop
 import tornado.template
 import tornado.web
-from json import load
 from config import Config
 import logging
 
@@ -19,26 +17,21 @@ def dump(s):
     return dumps(s, indent=2)
 
 
-class MainHandler(tornado.web.RequestHandler):
-    def get(self):
-        self.render("index.html",
-                    links=['/api/v1/interfaces/',
-                           '/api/v1/interface/pgsql/',
-                           '/api/v1/layers/',
-                           '/api/v1/layer/basic/'],
-                    site=self.settings['site'])
-
-
-class RestBase(tornado.web.RequestHandler):
+class RequestBase(tornado.web.RequestHandler):
     def get_current_user(self):
-        return self.get_secure_cookie("u")
-
-    def set_default_headers(self):
-        self.set_header("Content-Type", "application/json")
+        user = self.get_secure_cookie("u")
+        if user:
+            return loads(user.decode("utf-8"))
+        return None
 
     @property
     def db(self):
         return getattr(self.settings['db'], self.collection)
+
+
+class RestBase(RequestBase):
+    def set_default_headers(self):
+        self.set_header("Content-Type", "application/json")
 
     def parse_search_query(self):
         result = {}
@@ -50,6 +43,18 @@ class RestBase(tornado.web.RequestHandler):
             else:
                 result[self.factory.pk] = query
         return result
+
+
+class MainHandler(RequestBase):
+    def get(self):
+        self.render("index.html",
+                    links=['/api/v1/interfaces/',
+                           '/api/v1/interface/pgsql/',
+                           '/api/v1/layers/',
+                           '/api/v1/layer/basic/'],
+                    site=self.settings['site'],
+                    current_user=self.get_current_user(),
+                    )
 
 
 class RestCollection(RestBase):
@@ -64,7 +69,7 @@ class RestCollection(RestBase):
         self.write(dump(response))
         self.finish()
 
-    #@tornado.web.authenticated
+    @tornado.web.authenticated
     @tornado.web.addslash
     @tornado.web.asynchronous
     @gen.coroutine
@@ -100,7 +105,7 @@ class RestResource(RestBase):
         self.write(dump(document))
         self.finish()
 
-    #@tornado.web.authenticated
+    @tornado.web.authenticated
     @tornado.web.addslash
     @tornado.web.asynchronous
     @gen.coroutine
@@ -112,7 +117,7 @@ class RestResource(RestBase):
         yield document.save(self.db)
         self.finish()
 
-    #@tornado.web.authenticated
+    @tornado.web.authenticated
     @tornado.web.addslash
     @gen.coroutine
     def delete(self, id):
@@ -131,44 +136,70 @@ class LayerHandler(RestResource):
     collection = "layers"
 
 
-def load_oauth(key_fn):
-    if not os.path.exists(key_fn):
-        print("You need to set up a valid key file for auth.\n"
-              "See http://www.tornadoweb.org/en/stable/auth.html#google"
-              "for the default. By default this should live in"
-              " ~/.juju-interfaces.key.")
-    return load(open(key_fn))
+class LaunchpadAuthHandler(tornado.web.RequestHandler,
+                           tornado.auth.OpenIdMixin):
+    _OPENID_ENDPOINT = "https://login.launchpad.net/+openid"
 
-
-class GoogleOAuth2LoginHandler(tornado.web.RequestHandler,
-                               tornado.auth.GoogleOAuth2Mixin):
-    @property
-    def site(self):
-        return self.settings["site"] + "auth/google"
-
-    @tornado.gen.coroutine
+    @gen.coroutine
     def get(self):
-        if self.get_argument('code', False):
-            user = yield self.get_authenticated_user(
-                redirect_uri=self.site,
-                code=self.get_argument('code'))
-            # Save the user with e.g. set_secure_cookie
-            self.set_secure_cookie("u", user)
-        else:
-            yield self.authorize_redirect(
-                redirect_uri=self.site,
-                client_id=self.settings['google_oauth']['key'],
-                scope=['profile', 'email'],
-                response_type='code',
-                extra_params={'approval_prompt': 'auto'})
+        if self.get_argument("openid.mode", None):
+            user = yield self.get_authenticated_user()
+            if not user:
+                raise tornado.web.HTTPError(500, "Launchpad auth failed")
+            if user["username"] not in self.application.settings["users"]:
+                raise tornado.web.HTTPError(401,
+                                            "Launchpad user not authorized")
+            self.set_secure_cookie("u", tornado.escape.json_encode(user))
+            self.redirect("/")
+            return
+        self.authenticate_redirect()
+
+    def _on_authentication_verified(self, future, response):
+        if response.error or b"is_valid:true" not in response.body:
+            future.set_exception(tornado.auth.AuthError(
+                "Invalid OpenID response: %s" % (response.error or
+                                                 response.body)))
+            return
+
+        # Make sure we got back at least an email from attribute exchange
+        ax_ns = None
+        for name in self.request.arguments:
+            if name.startswith("openid.ns.") and \
+                    self.get_argument(name) == "http://openid.net/srv/ax/1.0":
+                ax_ns = name[10:]
+                break
+
+        def get_ax_arg(key):
+            if not ax_ns:
+                return None
+            base = "openid." + ax_ns
+            count = base + ".count." + key
+            # XXX: this is a hack, getting the .1 key
+            path = base + ".value." + key + ".1"
+
+            ct = self.get_argument(count, None)
+            if not ct:
+                return None
+            return self.get_argument(path, None)
+
+        user = {}
+        for key in ["fullname", "username", "email", "locale"]:
+            result = get_ax_arg(key)
+            if result is not None:
+                user[key] = result
+
+        claimed_id = self.get_argument("openid.claimed_id", None)
+        if claimed_id:
+            user["claimed_id"] = claimed_id
+        future.set_result(user)
 
 
 def setup():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--port', type=int, default=8888)
+    parser.add_argument('-p', '--port', type=int, default=9999)
     parser.add_argument('-l', '--log-level', default=logging.INFO)
     parser.add_argument('-d', '--database-name', type=str, default="test")
-    parser.add_argument('--database', type=str, default="mongo")
+    parser.add_argument('--database', type=str, default="localhost")
     parser.add_argument('-c', '--config', type=Config.load,
                         default=pkg_resources.resource_filename(
                             __name__, "config.json"))
@@ -189,7 +220,6 @@ def main():
         login_url="/login",
         template_path=pkg_resources.resource_filename(__name__, "."),
         static_path=pkg_resources.resource_filename(__name__, "static"),
-        google_oauth=load_oauth(os.path.expanduser("~/.juju-interfaces.key")),
         db=db))
 
     application = tornado.web.Application([
@@ -197,11 +227,11 @@ def main():
         (r"/api/v1/interface/([\-\w\d_]+)/?", InterfaceHandler),
         (r"/api/v1/layers/?", LayersHandler),
         (r"/api/v1/layer/([\w\d_]+)/?", LayerHandler),
-        (r"/login/", GoogleOAuth2LoginHandler),
+        (r"/login/", LaunchpadAuthHandler),
         (r"/", MainHandler),
     ], **settings)
 
-    application.listen(8888)
+    application.listen(options.port)
     tornado.ioloop.IOLoop.instance().start()
 
 if __name__ == '__main__':

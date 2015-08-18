@@ -12,10 +12,18 @@
     <body>
 
 
-    <div class="splash-container">
+   <div class="splash-container">
         <div class="splash">
             {%block splash %} {% end %}
        </div>
+    <div>
+        {% if current_user %}
+        Welcome {{current_user["fullname"]}}
+        {% else %}
+        <a href="/login/">Login with Launchpad</a>
+        {% end %}
+    </div>
+ 
     </div>
 
    </body>
