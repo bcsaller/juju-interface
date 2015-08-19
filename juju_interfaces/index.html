@@ -1,15 +1,18 @@
 {% extends base.html %}
 
-{% block splash %}
-        <h1 class="splash-head">Interface:</h1>
+{% block title %}
         <p class="splash-subhead">
-        See juju_interfaces for the full REST API
+        See <a href="https://github.com/bcsaller/juju-interface/">juju_interfaces</a> for the full REST API
         </p>
-        <div class="content-wrapper">
-            {% for target in links %}
-            <div><code>
-            curl {% raw linkify(site + target) %}
-            </code></div>
-            {% end %}
-        </div>
+{% end %}
+
+
+{% block content %}
+    <div class="content-wrapper">
+        <h2 class="splash-head">Interface:</h2>
+        {% module Overview(interfaces, "interface") %}
+
+        <h2 class="splash-head">Layer:</h2>
+        {% module Overview(layers, "layer") %}
+    </div>
 {% end %}

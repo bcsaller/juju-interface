@@ -1,17 +1,16 @@
 import argparse
 from bson.json_util import dumps, loads
 from document import Layer, Interface
-from tornado import gen
 import pkg_resources
 import motor
-import os
-import sys
+import ui
 
 import tornado.auth
 import tornado.escape
 import tornado.ioloop
 import tornado.template
 import tornado.web
+from tornado import gen
 from config import Config
 import logging
 
@@ -29,10 +28,14 @@ class RequestBase(tornado.web.RequestHandler):
 
     @property
     def db(self):
-        return getattr(self.settings['db'], self.collection)
+        return self.settings['db']
 
 
 class RestBase(RequestBase):
+    @property
+    def db(self):
+        return getattr(self.settings['db'], self.collection)
+
     def set_default_headers(self):
         self.set_header("Content-Type", "application/json")
 
@@ -49,15 +52,49 @@ class RestBase(RequestBase):
 
 
 class MainHandler(RequestBase):
+
+    @gen.coroutine
     def get(self):
+        interfaces = yield Interface.find(self.db.interfaces)
+        layers = yield Layer.find(self.db.layers)
         self.render("index.html",
-                    links=['/api/v1/interfaces/',
-                           '/api/v1/interface/pgsql/',
-                           '/api/v1/layers/',
-                           '/api/v1/layer/basic/'],
                     site=self.settings['site'],
                     current_user=self.get_current_user(),
+                    interfaces=interfaces,
+                    layers=layers
                     )
+
+
+def get_schema_by_kind(kind):
+    klass = None
+    schema = None
+    if kind == "interface":
+        klass = Interface
+    elif kind == "layer":
+        klass = Layer
+    schema = klass.schema
+    return klass, schema
+
+
+class EditHandler(RequestBase):
+    @tornado.web.addslash
+    @gen.coroutine
+    def get(self, kind, oid):
+        klass, schema = get_schema_by_kind(kind)
+        db = getattr(self.db, kind + "s")
+        obj = yield klass.load(db, oid)
+        self.render("editor.html",
+                    site=self.settings['site'],
+                    schema=schema,
+                    entity=obj,
+                    kind=kind)
+
+
+class SchemaHandler(RestBase):
+    @tornado.web.addslash
+    def get(self, kind):
+        _, schema = get_schema_by_kind(kind)
+        self.write(dump(schema))
 
 
 class RestCollection(RestBase):
@@ -223,14 +260,17 @@ def main():
         login_url="/login",
         template_path=pkg_resources.resource_filename(__name__, "."),
         static_path=pkg_resources.resource_filename(__name__, "static"),
-        db=db))
+        db=db,
+        ui_modules=ui))
 
     application = tornado.web.Application([
         (r"/api/v1/interfaces/?", InterfacesHandler),
         (r"/api/v1/interface/([\-\w\d_]+)/?", InterfaceHandler),
         (r"/api/v1/layers/?", LayersHandler),
         (r"/api/v1/layer/([\w\d_]+)/?", LayerHandler),
+        (r"/api/v1/schema/(interface|layer)/?", SchemaHandler),
         (r"/login/", LaunchpadAuthHandler),
+        (r"/(interface|layer)/([\-\w\d_]+)/?", EditHandler),
         (r"/", MainHandler),
     ], **settings)
 

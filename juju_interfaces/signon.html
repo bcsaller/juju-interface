@@ -1,0 +1,5 @@
+{% if not current_user %}
+<li class="pure-menu-item"><a href="/login/" class="pure-menu-link">Login with LP</a></li>
+{% else %}
+<li class="pure-menu-item">{{current_user["fullname"]}}</li>
+{% end %}

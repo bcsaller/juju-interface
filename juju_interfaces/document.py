@@ -66,12 +66,17 @@ class Document(dict):
 
     @classmethod
     @gen.coroutine
-    def find(cls, db, **kwargs):
+    def find(cls, db, sort=True, **kwargs):
         query = {}
         for k, v in kwargs.items():
             query[k] = cls.query_from_schema(k, v)
         if not query:
             query = {cls.pk: {"$exists": True}}
+
+        query = {"$query": query}
+        if sort:
+            query["$orderby"] = {cls.pk: 1}
+
         cursor = db.find(query)
         # XXX: how to only yield cls instances?
         result = []

@@ -8,23 +8,41 @@
     <title>Interface: Web Service</title>
     <link rel="stylesheet" href="{{static_url("pure-min.css")}}">
     <link rel="stylesheet" href="{{static_url("main.css")}}">
+    <script src="{{static_url("zepto.min.js")}}"></script>
+    <script src="{{static_url("jsoneditor.min.js")}}"></script>
     </head>
     <body>
 
 
-   <div class="splash-container">
-        <div class="splash">
-            {%block splash %} {% end %}
-       </div>
-    <div>
-        {% if current_user %}
-        Welcome {{current_user["fullname"]}}
-        {% else %}
-        <a href="/login/">Login with Launchpad</a>
-        {% end %}
-    </div>
- 
-    </div>
+    <div id="layout">
+        <!-- Menu toggle -->
+        <a href="#menu" id="menuLink" class="menu-link">
+            <!-- Hamburger icon -->
+            <span></span>
+        </a>
 
-   </body>
+        <div id="menu">
+            <div class="pure-menu">
+                <a class="pure-menu-heading" href="/"><img width="73" height="30" src="{{static_url("logo.png")}}"" alt=""></a>
+
+                <ul class="pure-menu-list">
+                    {% module SSO(current_user) %}
+                    {% module Menu(site) %}
+               </ul>
+            </div>
+            </div>
+
+            <div id="main">
+                {% block title %}
+                <div class="header">
+                    <h1>Page Title</h1>
+                    <h2>A subtitle for your page goes here</h2>
+                </div>
+                {% end %}
+
+                <div class="content">
+                {% block content %}
+                {% end %}
+                </div>
+        </body>
 </html>
