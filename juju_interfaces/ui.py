@@ -26,5 +26,5 @@ class Overview(tornado.web.UIModule):
         return self.render_string(
             "interfaces.html",
             collection=collection,
-            kind=kind
+            kind=kind,
         )

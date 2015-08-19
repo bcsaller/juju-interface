@@ -11,7 +11,8 @@
       "type": "string"
     },
     "version": {
-      "type": "number"
+      "type": "number",
+      "default": 1
     },
     "summary": {
       "type": "string"

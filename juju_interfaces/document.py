@@ -48,11 +48,15 @@ class Document(dict):
 
     @classmethod
     @gen.coroutine
-    def load(cls, db, key):
+    def load(cls, db, key, update=True):
         document = yield db.find_one({cls.pk: key})
         if document:
             raise gen.Return(cls(document))
-        raise gen.Return(cls({cls.pk: key}))
+        else:
+            empty = cls.empty()
+            empty.update({cls.pk: key})
+            document = cls(empty)
+        raise gen.Return(document)
 
     @classmethod
     def query_from_schema(cls, key, value):
@@ -63,6 +67,18 @@ class Document(dict):
         if stype == "number":
             return {"$eq": int(value)}
         return {"$regex": value}
+
+    @classmethod
+    def empty(cls):
+        """Return a dict populated with default (or empty) values from schema"""
+        result = {}
+        for k, v in cls.schema['properties'].items():
+            value = v.get("default", None)
+            if value is None:
+                if v.get('type', 'string') == "string":
+                    value = ""
+            result[k] = value
+        return result
 
     @classmethod
     @gen.coroutine

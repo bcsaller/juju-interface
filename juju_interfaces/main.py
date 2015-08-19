@@ -87,6 +87,7 @@ class EditHandler(RequestBase):
                     site=self.settings['site'],
                     schema=schema,
                     entity=obj,
+                    dumps=dumps,
                     kind=kind)
 
 

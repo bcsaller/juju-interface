@@ -16,7 +16,8 @@ schema: {%raw schema%},
 no_additional_properties: true,
 disable_collapse: true,
 disable_edit_json: true,
-disable_properties: true
+disable_properties: true,
+startval: {%raw dumps(entity.empty()) %}
 });
 
 var save = $("#editor_save");
@@ -27,7 +28,7 @@ save.on("click", function(e) {
         var data = editor.getValue();
         $.ajax({
         type: "POST", 
-        url: "/api/v1/{{kind}}/{{entity["id"]}}/",
+        url: "/api/v1/{{kind}}/" + data.id + "/",
         data: JSON.stringify(data),
         processData: false,
         complete: function(xhr, status) {
@@ -35,6 +36,7 @@ save.on("click", function(e) {
             message.text(xhr.responseText);
         } else {
             message.text("Saved");
+            window.location = "/{{kind}}/" + data.id + "/";
         }
         }
     })};
