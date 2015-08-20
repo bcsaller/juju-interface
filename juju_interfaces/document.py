@@ -23,6 +23,7 @@ def loader(filename, watch=True):
 
 class Document(dict):
     def __init__(self, data=None):
+        self.update(self.empty())
         self.update(data)
 
     def __str__(self):
@@ -53,9 +54,7 @@ class Document(dict):
         if document:
             raise gen.Return(cls(document))
         else:
-            empty = cls.empty()
-            empty.update({cls.pk: key})
-            document = cls(empty)
+            document = cls({cls.pk: key})
         raise gen.Return(document)
 
     @classmethod

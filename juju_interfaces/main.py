@@ -82,7 +82,11 @@ class EditHandler(RequestBase):
     def get(self, kind, oid):
         klass, schema = get_schema_by_kind(kind)
         db = getattr(self.db, kind + "s")
-        obj = yield klass.load(db, oid)
+        if oid == "+":
+            # "+" is out token for "add new"
+            obj = klass()
+        else:
+            obj = yield klass.load(db, oid)
         self.render("editor.html",
                     site=self.settings['site'],
                     schema=schema,
@@ -268,10 +272,10 @@ def main():
         (r"/api/v1/interfaces/?", InterfacesHandler),
         (r"/api/v1/interface/([\-\w\d_]+)/?", InterfaceHandler),
         (r"/api/v1/layers/?", LayersHandler),
-        (r"/api/v1/layer/([\w\d_]+)/?", LayerHandler),
+        (r"/api/v1/layer/([\-\w\d_]+)/?", LayerHandler),
         (r"/api/v1/schema/(interface|layer)/?", SchemaHandler),
         (r"/login/", LaunchpadAuthHandler),
-        (r"/(interface|layer)/([\-\w\d_]+)/?", EditHandler),
+        (r"/(interface|layer)/([\-\w\d_]+|\+)/?", EditHandler),
         (r"/", MainHandler),
     ], **settings)
 

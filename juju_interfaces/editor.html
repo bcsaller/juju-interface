@@ -8,6 +8,7 @@ Editing {{entity["id"]}}
 <pre id="editor_status"></pre>
 <div id="editor_holder"></div>
 <input id="editor_save" type="button" class="pure-button" value="submit"></input>
+<input id="editor_delete" type="button" class="pure-button" value="delete"></input>
 <script>
 // Set default options
 // Initialize the editor
@@ -21,6 +22,7 @@ startval: {%raw dumps(entity.empty()) %}
 });
 
 var save = $("#editor_save");
+var del = $("#editor_delete");
 var message = $("#editor_status");
 save.on("click", function(e) {
     var errors = editor.validate();
@@ -41,6 +43,25 @@ save.on("click", function(e) {
         }
     })};
 });
+
+del.on("click", function(e) {
+    var data = editor.getValue();
+    if (!data.id) { return; }
+    $.ajax({
+    type: "DELETE", 
+    url: "/api/v1/{{kind}}/" + data.id + "/",
+    processData: false,
+    complete: function(xhr, status) {
+    if (status === "error") {
+        message.text(xhr.responseText);
+    } else {
+        message.text("Removed");
+        window.location = "/";
+    }
+    }});
+});
+
+
 
 
 editor.setValue({%raw entity.bson()%});
