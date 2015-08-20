@@ -1,5 +1,4 @@
 pytest
-pyrestful
 tornado
 motor
 path.py
