@@ -7,6 +7,7 @@ import ui
 
 import tornado.auth
 import tornado.escape
+import tornado.httpclient
 import tornado.ioloop
 import tornado.template
 import tornado.web
@@ -184,6 +185,32 @@ class LayerHandler(RestResource):
 class LaunchpadAuthHandler(tornado.web.RequestHandler,
                            tornado.auth.OpenIdMixin):
     _OPENID_ENDPOINT = "https://login.launchpad.net/+openid"
+    _APIBASE = "https://api.launchpad.net/1.0/"
+
+    @gen.coroutine
+    def lp_client(self, url):
+        http_client = tornado.httpclient.HTTPClient()
+        url = self._APIBASE + url
+        try:
+            response = http_client.fetch(url, headers={"Accept": "text/json"})
+            raise gen.Return(response)
+        except tornado.httpclient.HTTPError:
+            raise gen.Return(False)
+        finally:
+            http_client.close()
+
+    @gen.coroutine
+    def check_lp_group_membership(self, username, groups):
+        if isinstance(groups, str):
+            groups = [groups]
+
+        for group in groups:
+            url = "{}/+member/{}/".format(group, username)
+            result = yield self.lp_client(url)
+            if result is not False:
+                raise gen.Return(True)
+
+        raise gen.Return(False)
 
     @gen.coroutine
     def get(self):
@@ -191,7 +218,9 @@ class LaunchpadAuthHandler(tornado.web.RequestHandler,
             user = yield self.get_authenticated_user()
             if not user:
                 raise tornado.web.HTTPError(500, "Launchpad auth failed")
-            if user["username"] not in self.application.settings["users"]:
+            if not (yield self.check_lp_group_membership(
+                user["username"],
+                groups=self.application.settings["lp_groups"])):
                 raise tornado.web.HTTPError(401,
                                             "Launchpad user not authorized")
             self.set_secure_cookie("u", tornado.escape.json_encode(user))
