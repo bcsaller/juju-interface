@@ -1,14 +1,28 @@
 [
   {
     "_id": {
+      "$oid": "55d602f0b3bfbd74d0f5f364"
+    },
+    "name": "Apache PHP base layer",
+    "summary": "Configurable base for Apache PHP charms",
+    "lastModified": {
+      "$date": 1440088816312
+    },
+    "repo": "https://github.com/johnsca/apache-php.git",
+    "version": 1,
+    "id": "apache-php"
+  },
+  {
+    "_id": {
       "$oid": "55aec7649c1d246feae487eb"
     },
-    "repo": "https://git.launchpad.net/~bcsaller/charms/+source/basic",
-    "id": "basic",
-    "version": 1,
+    "name": "Base Layer",
+    "summary": "Basic layer for charms with the Reactive framework",
     "lastModified": {
-      "$date": 1437517668350
+      "$date": 1440088846341
     },
-    "name": "basic"
+    "repo": "https://git.launchpad.net/~bcsaller/charms/+source/basic",
+    "version": 3,
+    "id": "basic"
   }
 ]
