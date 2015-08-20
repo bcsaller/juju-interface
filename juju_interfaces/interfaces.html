@@ -9,7 +9,7 @@
     <tbody>
     {% for e in collection %}
     <tr>
-        <td><a href="/{{kind}}/{{e["id"]}}/">{{e.get("name", e["id"])}}</a></td>
+        <td><a href="/{{kind}}/{{e["id"]}}/">{{e.get("name") or e["id"]}}</a></td>
         <td><a href="{{e["repo"]}}">Repo</a></td>
         <td>{{e.get("summary")}}</td>
     </tr>
