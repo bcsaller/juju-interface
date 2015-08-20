@@ -65,7 +65,7 @@ class Document(dict):
         stype = spec.get("type", "string")
         if stype == "number":
             return {"$eq": int(value)}
-        return {"$regex": value}
+        return {"$regex": value, "$options": "i"}
 
     @classmethod
     def empty(cls):
