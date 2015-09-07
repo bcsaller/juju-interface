@@ -8,18 +8,27 @@
     <title>Interface: Web Service</title>
     <link rel="stylesheet" href="{{static_url("pure-min.css")}}">
     <link rel="stylesheet" href="{{static_url("main.css")}}">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
     <script src="{{static_url("zepto.min.js")}}"></script>
     <script src="{{static_url("jsoneditor.min.js")}}"></script>
+    <script src="{{static_url("autocomplete.js")}}"></script>
     </head>
     <body>
 
 
     <div id="layout">
         <!-- Menu toggle -->
-        <a href="#menu" id="menuLink" class="menu-link">
+        <a shape="ref="#menu" id="menuLink" class="menu-link">
             <!-- Hamburger icon -->
             <span></span>
         </a>
+
+        <div id="searchbox">
+            <div class="box">
+                <input type="search" id="search" placeholder="Search..." />
+                <button class="icon"><i class="fa fa-search"></i></button>
+            </div>
+        </div>
 
         <div id="menu">
             <div class="pure-menu">
