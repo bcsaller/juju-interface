@@ -268,3 +268,71 @@ Hides the menu at `48em`, but modify this based on your app's needs.
         left: 150px;
     }
 }
+
+
+.entities {
+    table-layout: auto;
+    display: table;
+}
+
+.entity {
+    display: table-row;
+    background-color: #eaeaea;
+}
+
+.entity:nth-child(odd) {
+    background-color: #fff;
+}
+
+
+.entity div {
+    display: table-cell;
+    padding: 0.5em;
+}
+
+
+
+/* SEARCH */
+#search-box {
+    position: absolute;
+    top: 0em;
+    right: 4em;
+    width: 300px;
+    border: none;
+    font-size: 10pt;
+    color: #ccc
+    padding-left: 15px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+}
+
+#search {
+    height: 50px;
+}
+
+#search-box button.icon{
+  -webkit-border-top-right-radius: 5px;
+  -webkit-border-bottom-right-radius: 5px;
+  -moz-border-radius-topright: 5px;
+  -moz-border-radius-bottomright: 5px;
+  border-top-right-radius: 5px;
+  border-bottom-right-radius: 5px;
+  border: none;
+  width: 45px;
+  color: #4f5b66;
+  opacity: 0;
+  font-size: 10pt;
+  -webkit-transition: all .55s ease;
+  -moz-transition: all .55s ease;
+  -ms-transition: all .55s ease;
+  -o-transition: all .55s ease;
+  transition: all .55s ease;
+}
+
+#search-clear {
+    margin-left: -2em;
+    color: #ccc
+    font-size: 10pt;
+    display: none;
+}

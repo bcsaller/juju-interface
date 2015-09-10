@@ -23,6 +23,7 @@ var EntityBox = React.createClass({
 
 var SearchBox = React.createClass({
     handleQuery: function(e) {
+        e.preventDefault();
         var q = React.findDOMNode(this.refs.search).value.trim();
         if (q) {
             this.props.setQuery(e.target.value.trim());
