@@ -294,17 +294,11 @@ Hides the menu at `48em`, but modify this based on your app's needs.
 
 /* SEARCH */
 #search-box {
-    position: absolute;
+    float:right;
     top: 0em;
-    right: 4em;
-    width: 300px;
-    border: none;
+    right: 1em;
     font-size: 10pt;
     color: #ccc
-    padding-left: 15px;
-    -webkit-border-radius: 5px;
-    -moz-border-radius: 5px;
-    border-radius: 5px;
 }
 
 #search {
