@@ -8,11 +8,14 @@
 
 
 {% block content %}
-    <div class="content-wrapper">
-        <h2 class="splash-head">Interface: {%if current_user%}<a href="/interface/+/">+</a>{%end%}</h2>
-                {% module Overview(interfaces, "interface") %}
-
-                <h2 class="splash-head">Layer: {%if current_user%}<a href="/layer/+/">+</a>{%end%}</h2>
-        {% module Overview(layers, "layer") %}
+<div class="content-wrapper">
+    <div id="entity-box"/>
     </div>
+    <script type="text/jsx;harmony=true">
+        React.render(
+            <EntityBox {%if current_user%}loggedIn={true}{%end%}/>,
+            document.getElementById('entity-box')
+        );
+    </script>
+</div>
 {% end %}
