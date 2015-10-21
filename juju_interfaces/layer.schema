@@ -1,4 +1,5 @@
 {
+  "title": "Layer",
   "type": "object",
   "properties": {
     "id": {
@@ -16,6 +17,14 @@
     },
     "summary": {
       "type": "string"
+    },
+    "owner": {
+        "type": "array",
+        "items":{
+            "type": "string"
+        },
+        "minItems": 1
     }
-  }
+  },
+  "required": ["id", "name", "repo", "owner"]
 }

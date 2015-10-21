@@ -3,3 +3,4 @@ tornado
 motor
 path.py
 jsonschema
+requests

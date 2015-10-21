@@ -101,7 +101,7 @@ var EntityCollection = React.createClass({
         var self = this;
         var entities = this.state.data.map(function(entity, index) {
             return (
-                <Entity kind={self.props.kind} repo={entity.repo} key={entity.id} id={entity.id} name={entity.name} summary={entity.summary}/>
+                <Entity {...entity} kind={self.props.kind}/>
             );
         });
         var addNew = "";
@@ -128,6 +128,7 @@ var Entity = React.createClass({
                 <div className="identity"><a href={detailURL} alt={this.props.id}>{this.props.name}</a></div>
                 <div className="repo"><a href={this.props.repo}>Repo</a></div>
                 <div className="summary">{this.props.summary}</div>
+                <div className="owner">{this.props.owner.join(", ")}</div>
             </div>
         );
     }

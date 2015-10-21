@@ -1,5 +1,4 @@
 {
     "site": "http://bcsaller.dyndns.org:9999",
-    "cookie_secret": "52e714bd-d35f-4c22-8815-f19aaf9b11d9",
-    "lp_groups": ["~charmers"]
+    "cookie_secret": "52e714bd-d35f-4c22-8815-f19aaf9b11d9"
 }

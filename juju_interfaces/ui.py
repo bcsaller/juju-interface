@@ -19,12 +19,3 @@ class SSO(tornado.web.UIModule):
             "signon.html",
             current_user=user
         )
-
-
-class Overview(tornado.web.UIModule):
-    def render(self, collection, kind):
-        return self.render_string(
-            "interfaces.html",
-            collection=collection,
-            kind=kind,
-        )
