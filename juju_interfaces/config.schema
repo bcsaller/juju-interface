@@ -7,5 +7,6 @@
     "cookie_secret": {
       "type": "string"
     }
-  }
+  },
+  "required": ["site_url", "cookie_secret"]
 }

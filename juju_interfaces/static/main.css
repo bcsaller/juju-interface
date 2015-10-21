@@ -269,24 +269,42 @@ Hides the menu at `48em`, but modify this based on your app's needs.
     }
 }
 
-#searchbox{
-  width: 300px;
-  height: 50px;
-  float: right;
-  border: none;
-  font-size: 10pt;
-  color: #ccc
-  padding-left: 15px;
-  -webkit-border-radius: 5px;
-  -moz-border-radius: 5px;
-  border-radius: 5px;
+.entities {
+    table-layout: auto;
+    display: table;
+}
+
+.entity {
+    display: table-row;
+    background-color: #eaeaea;
+}
+
+.entity:nth-child(odd) {
+    background-color: #fff;
+}
+
+
+.entity div {
+    display: table-cell;
+    padding: 0.5em;
+}
+
+
+
+/* SEARCH */
+#search-box {
+    float:right;
+    top: 0em;
+    right: 1em;
+    font-size: 10pt;
+    color: #ccc
 }
 
 #search {
     height: 50px;
 }
 
-#searchbox button.icon{
+#search-box button.icon{
   -webkit-border-top-right-radius: 5px;
   -webkit-border-bottom-right-radius: 5px;
   -moz-border-radius-topright: 5px;
@@ -294,7 +312,6 @@ Hides the menu at `48em`, but modify this based on your app's needs.
   border-top-right-radius: 5px;
   border-bottom-right-radius: 5px;
   border: none;
-  height: 50px;
   width: 45px;
   color: #4f5b66;
   opacity: 0;
@@ -306,13 +323,9 @@ Hides the menu at `48em`, but modify this based on your app's needs.
   transition: all .55s ease;
 }
 
-#searchbox:hover button.icon, #searchbox:active button.icon, #searchbox:focus button.icon{
-  outline: none;
-  opacity: 1;
-  margin-left: -50px;
+#search-clear {
+    margin-left: -2em;
+    color: #ccc
+    font-size: 10pt;
+    display: none;
 }
-
-#searchbox:hover button.icon:hover{
-  background: white;
-}
- 

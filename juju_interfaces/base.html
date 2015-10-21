@@ -8,10 +8,11 @@
     <title>Interface: Web Service</title>
     <link rel="stylesheet" href="{{static_url("pure-min.css")}}">
     <link rel="stylesheet" href="{{static_url("main.css")}}">
-    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="{{static_url("0.13.3/react.js")}}"></script>
+    <script src="{{static_url("0.13.3/JSXTransformer.js")}}"></script>
     <script src="{{static_url("zepto.min.js")}}"></script>
     <script src="{{static_url("jsoneditor.min.js")}}"></script>
-    <script src="{{static_url("autocomplete.js")}}"></script>
+    <script type="text/jsx;harmony=true" src="{{static_url("main.jsx")}}"></script>
     </head>
     <body>
 
@@ -22,13 +23,6 @@
             <!-- Hamburger icon -->
             <span></span>
         </a>
-
-        <div id="searchbox">
-            <div class="box">
-                <input type="search" id="search" placeholder="Search..." />
-                <button class="icon"><i class="fa fa-search"></i></button>
-            </div>
-        </div>
 
         <div id="menu">
             <div class="pure-menu">
@@ -53,5 +47,5 @@
                 {% block content %}
                 {% end %}
                 </div>
-        </body>
+       </body>
 </html>

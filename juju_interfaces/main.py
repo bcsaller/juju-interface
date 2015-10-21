@@ -20,7 +20,36 @@ def dump(s):
     return dumps(s, indent=2)
 
 
-class RequestBase(tornado.web.RequestHandler):
+class LaunchPadAPIMixin(object):
+    _APIBASE = "https://api.launchpad.net/1.0/"
+
+    @gen.coroutine
+    def lp_client(self, url):
+        http_client = tornado.httpclient.HTTPClient()
+        url = self._APIBASE + url
+        try:
+            response = http_client.fetch(url, headers={"Accept": "text/json"})
+            raise gen.Return(response)
+        except tornado.httpclient.HTTPError:
+            raise gen.Return(False)
+        finally:
+            http_client.close()
+
+    @gen.coroutine
+    def check_lp_group_membership(self, username, groups):
+        if isinstance(groups, str):
+            groups = [groups]
+
+        for group in groups:
+            url = "{}/+member/{}/".format(group, username)
+            result = yield self.lp_client(url)
+            if result is not False:
+                raise gen.Return(True)
+
+        raise gen.Return(False)
+
+
+class RequestBase(tornado.web.RequestHandler, LaunchPadAPIMixin):
     def get_current_user(self):
         user = self.get_secure_cookie("u")
         if user:
@@ -51,9 +80,25 @@ class RestBase(RequestBase):
                 result[self.factory.pk] = query
         return result
 
+    @gen.coroutine
+    def verify_write_permissions(self, document, user=None):
+        if user is None:
+            user = self.get_current_user()["username"]
+        owners = document.get("owner", [])
+        if not owners:
+            # XXX: backwards compat
+            raise gen.Return(True)
+        users = [o for o in owners if not o.startswith("~")]
+        if user in users:
+            raise gen.Return(True)
+
+        groups = [o for o in owners if o.startswith("~")]
+        # Include admin groups which always pass test
+        groups += self.settings.get("admin_lp_group", [])
+        raise gen.Return(self.check_lp_group_membership(user, groups))
+
 
 class MainHandler(RequestBase):
-
     @gen.coroutine
     def get(self):
         interfaces = yield Interface.find(self.db.interfaces)
@@ -124,11 +169,21 @@ class RestCollection(RestBase):
         body = loads(self.request.body.decode("utf-8"))
         if not isinstance(body, list):
             body = [body]
+        user = self.get_current_user()["username"]
+        # validate the user can modify each record before changing any
+        # XXX: this could be a race (vs out of band modification)
+        # but this will be redone with proper database acls
+        documents = []
         for item in body:
             id = item['id']
             document = yield self.factory.load(self.db, id)
+            if not (yield self.verify_write_permissions(document, user)):
+                raise tornado.web.HTTPError(401,
+                                            "Launchpad user not authorized")
             document.update(item)
-            yield document.save(self.db)
+            documents.append(document)
+        for document in documents:
+            yield document.save(self.db, user=user)
         self.finish()
 
 
@@ -159,8 +214,12 @@ class RestResource(RestBase):
         # XXX: assumes encoding :-/
         body = loads(self.request.body.decode("utf-8"))
         document = yield self.factory.load(self.db, id)
+        user = self.get_current_user()["username"]
+        if not (yield self.verify_write_permissions(document, user)):
+            raise tornado.web.HTTPError(401,
+                                        "Launchpad user not authorized")
         document.update(body)
-        yield document.save(self.db)
+        yield document.save(self.db, user=user)
         self.finish()
 
     @tornado.web.authenticated
@@ -168,6 +227,10 @@ class RestResource(RestBase):
     @gen.coroutine
     def delete(self, id):
         document = yield self.factory.load(self.db, id)
+        user = self.get_current_user()["username"]
+        if not (yield self.verify_write_permissions(document, user)):
+            raise tornado.web.HTTPError(401,
+                                        "Launchpad user not authorized")
         if document:
             yield document.remove(self.db)
 
@@ -183,34 +246,9 @@ class LayerHandler(RestResource):
 
 
 class LaunchpadAuthHandler(tornado.web.RequestHandler,
-                           tornado.auth.OpenIdMixin):
+                           tornado.auth.OpenIdMixin,
+                           LaunchPadAPIMixin):
     _OPENID_ENDPOINT = "https://login.launchpad.net/+openid"
-    _APIBASE = "https://api.launchpad.net/1.0/"
-
-    @gen.coroutine
-    def lp_client(self, url):
-        http_client = tornado.httpclient.HTTPClient()
-        url = self._APIBASE + url
-        try:
-            response = http_client.fetch(url, headers={"Accept": "text/json"})
-            raise gen.Return(response)
-        except tornado.httpclient.HTTPError:
-            raise gen.Return(False)
-        finally:
-            http_client.close()
-
-    @gen.coroutine
-    def check_lp_group_membership(self, username, groups):
-        if isinstance(groups, str):
-            groups = [groups]
-
-        for group in groups:
-            url = "{}/+member/{}/".format(group, username)
-            result = yield self.lp_client(url)
-            if result is not False:
-                raise gen.Return(True)
-
-        raise gen.Return(False)
 
     @gen.coroutine
     def get(self):
@@ -218,11 +256,6 @@ class LaunchpadAuthHandler(tornado.web.RequestHandler,
             user = yield self.get_authenticated_user()
             if not user:
                 raise tornado.web.HTTPError(500, "Launchpad auth failed")
-            if not (yield self.check_lp_group_membership(
-                user["username"],
-                groups=self.application.settings["lp_groups"])):
-                raise tornado.web.HTTPError(401,
-                                            "Launchpad user not authorized")
             self.set_secure_cookie("u", tornado.escape.json_encode(user))
             self.redirect("/")
             return

@@ -45,7 +45,6 @@ class Document(dict):
                 data = loads(data)
             super(Document, self).update(data)
         super(Document, self).update(kwargs)
-        self.validate()
 
     @classmethod
     @gen.coroutine
@@ -69,7 +68,8 @@ class Document(dict):
 
     @classmethod
     def empty(cls):
-        """Return a dict populated with default (or empty) values from schema"""
+        """Return a dict populated with default (or empty)
+        values from schema"""
         result = {}
         for k, v in cls.schema['properties'].items():
             value = v.get("default", None)
@@ -101,11 +101,15 @@ class Document(dict):
         raise gen.Return(result)
 
     @gen.coroutine
-    def save(self, db, upsert=True):
+    def save(self, db, upsert=True, user=None):
         pk = self[self.pk]
         self.validate()
-        dict.__setitem__(self, 'lastModified',
+        dict.__setitem__(self, 'lastmodified',
                          datetime.datetime.utcnow())
+        owners = self.get("owner", [])
+        if user and not owners:
+            dict.__setitem__(self, 'owner',
+                            [user])
         yield db.update({self.pk: pk},
                         {'$set': self},
                         upsert=upsert)
