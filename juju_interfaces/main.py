@@ -93,6 +93,8 @@ class RestBase(RequestBase):
             raise gen.Return(True)
 
         groups = [o for o in owners if o.startswith("~")]
+        # Include admin groups which always pass test
+        groups += self.settings.get("admin_lp_group", [])
         raise gen.Return(self.check_lp_group_membership(user, groups))
 
 
