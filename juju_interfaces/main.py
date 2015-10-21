@@ -1,5 +1,6 @@
 import argparse
 from bson.json_util import dumps, loads
+import datetime
 from document import Layer, Interface
 import pkg_resources
 import motor
@@ -245,6 +246,22 @@ class LayerHandler(RestResource):
     collection = "layers"
 
 
+class MetricsHandler(RequestBase):
+    @property
+    def db(self):
+        return getattr(self.settings['db'], "metrics")
+
+    @tornado.web.addslash
+    @tornado.web.asynchronous
+    @gen.coroutine
+    def post(self):
+        body = loads(self.request.body.decode("utf-8"))
+        body.update({"remote_ip": self.request.remote_ip,
+                     "timestamp": datetime.datetime.utcnow()})
+        self.db.insert(body, w=0)
+        self.finish()
+
+
 class LaunchpadAuthHandler(tornado.web.RequestHandler,
                            tornado.auth.OpenIdMixin,
                            LaunchPadAPIMixin):
@@ -336,6 +353,7 @@ def main():
         (r"/api/v1/layers/?", LayersHandler),
         (r"/api/v1/layer/([\-\w\d_]+)/?", LayerHandler),
         (r"/api/v1/schema/(interface|layer)/?", SchemaHandler),
+        (r"/api/v1/metrics/?", MetricsHandler),
         (r"/login/", LaunchpadAuthHandler),
         (r"/(interface|layer)/([\-\w\d_]+|\+)/?", EditHandler),
         (r"/", MainHandler),
