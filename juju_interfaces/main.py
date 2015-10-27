@@ -61,6 +61,20 @@ class RequestBase(tornado.web.RequestHandler, LaunchPadAPIMixin):
     def db(self):
         return self.settings['db']
 
+    @property
+    def metrics(self):
+        return getattr(self.settings['db'], "metrics")
+
+    @gen.coroutine
+    def add_metric(self, data):
+        data.update({
+            "remote_ip": self.request.remote_ip,
+            "timestamp": datetime.datetime.utcnow()
+        })
+        if self.current_user:
+            data["username"] = self.current_user["username"]
+        yield self.metrics.insert(data, w=0)
+
 
 class RestBase(RequestBase):
     @property
@@ -185,6 +199,9 @@ class RestCollection(RestBase):
             documents.append(document)
         for document in documents:
             yield document.save(self.db, user=user)
+            yield self.add_metric({"kind": self.collection,
+                                   "action": "update",
+                                   "item": document['id']})
         self.finish()
 
 
@@ -221,6 +238,9 @@ class RestResource(RestBase):
                                         "Launchpad user not authorized")
         document.update(body)
         yield document.save(self.db, user=user)
+        yield self.add_metric({"kind": self.collection,
+                               "action": "update",
+                               "item": document['id']})
         self.finish()
 
     @tornado.web.authenticated
@@ -234,6 +254,9 @@ class RestResource(RestBase):
                                         "Launchpad user not authorized")
         if document:
             yield document.remove(self.db)
+            yield self.add_metric({"kind": self.collection,
+                                   "action": "delete",
+                                   "item": document['id']})
 
 
 class InterfaceHandler(RestResource):
@@ -248,7 +271,7 @@ class LayerHandler(RestResource):
 
 class MetricsHandler(RequestBase):
     @property
-    def db(self):
+    def metrics(self):
         return getattr(self.settings['db'], "metrics")
 
     @tornado.web.addslash
@@ -256,9 +279,8 @@ class MetricsHandler(RequestBase):
     @gen.coroutine
     def post(self):
         body = loads(self.request.body.decode("utf-8"))
-        body.update({"remote_ip": self.request.remote_ip,
-                     "timestamp": datetime.datetime.utcnow()})
-        self.db.insert(body, w=0)
+        body.update({"kind": "build"})
+        yield self.add_metric(body)
         self.finish()
 
 
